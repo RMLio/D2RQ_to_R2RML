@@ -5,9 +5,6 @@ from rdflib.namespace import XSD
 g=rdflib.Graph()
 newg=rdflib.Graph()
 g.parse("EwiLodD2R_TM.n3", format="n3")
-#g.load('http://dbpedia.org/resource/Semantic_Web')
-
-len(g) # prints 2
 
 for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#ClassMap')) ):
    for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#dataStorage'), None) ):
@@ -56,7 +53,6 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
          newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
          newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#column'), obj])
-         print preObj
          for preObj,pre,datatype in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#datatype'), None) ):
             newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#datatype'), datatype])
          for preObj,pre,lang in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#lang'), None) ):
