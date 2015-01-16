@@ -1,5 +1,7 @@
 import rdflib, re
-from rdflib import URIRef, BNode, RDF
+from rdflib import URIRef, BNode, RDF, Literal
+from rdflib.namespace import XSD
+
 g=rdflib.Graph()
 newg=rdflib.Graph()
 g.parse("EwiLodD2R_TM.n3", format="n3")
@@ -8,6 +10,14 @@ g.parse("EwiLodD2R_TM.n3", format="n3")
 len(g) # prints 2
 
 for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#ClassMap')) ):
+   for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#dataStorage'), None) ):
+      for object,predicate,database in g.triples( (object,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#jdbcDSN'), None) ):
+         newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'),URIRef(database)])
+         newg.add([URIRef(database), RDF.type, URIRef('http://www.w3.org/ns/r2rml#LogicalTable')])
+         newg.add([URIRef(database), URIRef('http://www.w3.org/ns/r2rml#tableName'), Literal(database)])
+         print database
+
+   #generates the SubjectMap
    subjectNode = subject + "_subjectMap"
    newg.add([subject, RDF.type, URIRef('http://www.w3.org/ns/r2rml#TriplesMap')])
    newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#subjectMap'),subjectNode])
