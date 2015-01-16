@@ -37,9 +37,9 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#dynamicProperty'), None) ):
          preNode = obj + "_PreMap"
          print preNode
-         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#predicateMap'), preNode])
-         newg.add([preNode, URIRef('http://www.w3.org/ns/r2rml#constant'), Literal(obj)])
-         newg.add([preNode, URIRef('http://www.w3.org/ns/r2rml#termType'), URIRef('http://www.w3.org/ns/r2rml#IRI')])
+         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#predicateMap'), URIRef(preNode)])
+         newg.add([URIRef(preNode), URIRef('http://www.w3.org/ns/r2rml#constant'), Literal(obj)])
+         newg.add([URIRef(preNode), URIRef('http://www.w3.org/ns/r2rml#termType'), URIRef('http://www.w3.org/ns/r2rml#IRI')])
 
       #template-valued object
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
@@ -83,5 +83,18 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
          newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
          newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#column'), obj])
          newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#termType'), URIRef('http://www.w3.org/ns/r2rml#IRI')])
+
+      #Referencing object map
+      for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#refersToClassMap'), None) ):
+         objNode = preObj + "_ObjMap"
+         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
+         newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
+         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#parentTriplesMap'), obj])
+         for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#join'), None) ):
+            joinNode = preObj + "_JoinMap"
+            newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#joinCondition'), URIRef(joinNode)])
+            #TODO: split parent and child
+            newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(obj)])
+            newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(obj)])
 
 newg.serialize("cerif.r2rml.ttl",format='turtle')
