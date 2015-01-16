@@ -4,7 +4,7 @@ from rdflib.namespace import XSD
 
 g=rdflib.Graph()
 newg=rdflib.Graph()
-g.parse("EwiLodD2R_TM.n3", format="n3")
+g.parse("cerif.d2rq.n3", format="n3")
 
 for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#ClassMap')) ):
    for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#dataStorage'), None) ):
@@ -21,7 +21,7 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
    #newg.add([URIRef(subjectNode), URIRef('http://www.w3.org/ns/r2rml#template'),URIRef(object.replace("|urlencode",""))])
    if((subject,URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'),None) in g):
       for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
-         newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),URIRef(object.replace("|urlencode",""))])
+         newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),Literal(object.replace("|urlencode",""))])
       for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'), None) ):
    		newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#class'),URIRef(object)])
 
@@ -29,15 +29,24 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
       newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#predicateObjectMap'), URIRef(preObj)])
       newg.add([preObj, RDF.type, URIRef('http://www.w3.org/ns/r2rml#PredicateObjectMap')])
 
+      #generates rr:predicate
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#property'), None) ):
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#predicate'), obj])
+
+      #generates rr:predicateMap
+      for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#dynamicProperty'), None) ):
+         preNode = obj + "_PreMap"
+         print preNode
+         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#predicateMap'), preNode])
+         newg.add([preNode, URIRef('http://www.w3.org/ns/r2rml#constant'), Literal(obj)])
+         newg.add([preNode, URIRef('http://www.w3.org/ns/r2rml#termType'), URIRef('http://www.w3.org/ns/r2rml#IRI')])
 
       #template-valued object
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
          objNode = preObj + "_ObjMap"
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
          newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
-         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), URIRef(obj.replace("|urlencode",""))])
+         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), Literal(obj.replace("|urlencode",""))])
 
       #constant-valued object
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#constantValue'), None) ):
@@ -59,4 +68,4 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
             print "language %s"%datatype
             newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#language'), lang])
 
-newg.serialize("newMapping.r2rml.ttl",format='turtle')
+newg.serialize("cerif.r2rml.ttl",format='turtle')
