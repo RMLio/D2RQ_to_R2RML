@@ -48,7 +48,9 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
          newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#column'), obj])
          print preObj
          for preObj,pre,datatype in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#datatype'), None) ):
-            print "datatype %s"%datatype
             newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#datatype'), datatype])
+         for preObj,pre,lang in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#lang'), None) ):
+            print "language %s"%datatype
+            newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#language'), lang])
 
 newg.serialize("newMapping.r2rml.ttl",format='turtle')
