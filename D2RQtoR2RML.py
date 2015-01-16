@@ -76,4 +76,12 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
             print "language %s"%datatype
             newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#language'), lang])
 
+      #column valued URI object
+      for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriColumn'), None) ):
+         objNode = preObj + "_ObjMap"
+         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
+         newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
+         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#column'), obj])
+         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#termType'), URIRef('http://www.w3.org/ns/r2rml#IRI')])
+
 newg.serialize("cerif.r2rml.ttl",format='turtle')
