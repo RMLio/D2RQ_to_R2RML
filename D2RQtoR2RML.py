@@ -48,6 +48,14 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
          newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
          newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), Literal(obj.replace("|urlencode",""))])
 
+      #template-valued Literal object
+      for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#pattern'), None) ):
+         objNode = preObj + "_ObjMap"
+         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
+         newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
+         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), Literal(obj.replace("|urlencode",""))])
+         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#termType'), URIRef('http://www.w3.org/ns/r2rml#Literal')])
+
       #constant-valued object
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#constantValue'), None) ):
          print obj
