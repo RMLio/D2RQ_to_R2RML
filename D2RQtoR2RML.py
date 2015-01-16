@@ -15,7 +15,6 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
          newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'),URIRef(database)])
          newg.add([URIRef(database), RDF.type, URIRef('http://www.w3.org/ns/r2rml#LogicalTable')])
          newg.add([URIRef(database), URIRef('http://www.w3.org/ns/r2rml#tableName'), Literal(database)])
-         print database
 
    #generates the SubjectMap
    subjectNode = subject + "_subjectMap"
@@ -36,20 +35,20 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#property'), None) ):
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#predicate'), obj])
 
-      for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None)):
+      for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
          objNode = preObj + "_ObjMap"
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
          newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
-         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), obj])
+         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), URIRef(obj.replace("|urlencode",""))])
 
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#column'), None) ):
          objNode = preObj + "_ObjMap"
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
          newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
          newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#column'), obj])
-         for datatype in g.subject_predicates( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#datatype')) ):
-         #if((None,URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#datatype'),datatype) in g):
-            print "Predicate Object Map %s has datatype %s"%(preObj,datatype)
+         print preObj
+         for preObj,pre,datatype in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#datatype'), None) ):
+            print "datatype %s"%datatype
             newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#datatype'), datatype])
 
 newg.serialize("newMapping.r2rml.ttl",format='turtle')
