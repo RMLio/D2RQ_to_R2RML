@@ -9,7 +9,6 @@ g.parse("cerif.d2rq.n3", format="n3")
 for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#ClassMap')) ):
    #generates the SubjectMap
    logicalTableNode = subject + "_LogicalTable"
-   print logicalTableNode
    newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'),URIRef(logicalTableNode)])
    newg.add([URIRef(logicalTableNode), RDF.type, URIRef('http://www.w3.org/ns/r2rml#LogicalTable')])
    subjectNode = subject + "_subjectMap"
@@ -63,7 +62,6 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
 
       #constant-valued object
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#constantValue'), None) ):
-         print obj
          objNode = preObj + "_ObjMap"
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
          newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
@@ -99,13 +97,17 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
             joinNode = preObj + "_JoinMap_" + str(numJoins)
             numJoins = numJoins + 1
             newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#joinCondition'), URIRef(joinNode)])
-            #TODO: better split parent and child
             table = re.split(' |=',obj)
             newg.add([joinNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#Join')])
-            print tableName
-            print table[0]
-            print table[len(table)-1]
-            newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[0])])
-            newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
-
+            #print subject
+            for subject,pred,obj in newg.triples( (subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'), None) ):
+               for obj,predd,tab in newg.triples( (obj, URIRef('http://www.w3.org/ns/r2rml#tableName'), None) ):
+                  pp = re.compile( '.')
+                  mm = re.search('(.+?)\.', table[0])
+                  if str(mm.group(1)) == str(tab):
+                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[len(table)-1])])
+                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[0])])
+                  else:
+                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[0])])
+                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
 newg.serialize("cerif.r2rml.ttl",format='turtle')
