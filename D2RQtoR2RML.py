@@ -99,6 +99,6 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
             #TODO: better split parent and child
             table = re.split(' |=',obj)
             newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[0])])
-            newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[1])])
+            newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
 
 newg.serialize("cerif.r2rml.ttl",format='turtle')
