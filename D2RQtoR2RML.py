@@ -4,7 +4,7 @@ from rdflib.namespace import XSD
 
 g=rdflib.Graph()
 newg=rdflib.Graph()
-g.parse("cerif.d2rq.n3", format="n3")
+g.parse("D2R_Rules/fris/ResearchOutputTypesForPublicationsD2R.n3", format="n3")
 
 for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#ClassMap')) ):
    #generates the SubjectMap
@@ -14,6 +14,7 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
    subjectNode = subject + "_subjectMap"
    newg.add([subject, RDF.type, URIRef('http://www.w3.org/ns/r2rml#TriplesMap')])
    newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#subjectMap'),subjectNode])
+   newg.add([subjectNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#SubjectMap')])
 
    if((subject,URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'),None) in g):
       for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
@@ -38,6 +39,7 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#dynamicProperty'), None) ):
          preNode = obj + "_PreMap"
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#predicateMap'), URIRef(preNode)])
+         newg.add([URIRef(preNode), RDF.type, URIRef('http://www.w3.org/ns/r2rml#PredicateMap')])
          newg.add([URIRef(preNode), URIRef('http://www.w3.org/ns/r2rml#constant'), Literal(obj)])
          newg.add([URIRef(preNode), URIRef('http://www.w3.org/ns/r2rml#termType'), URIRef('http://www.w3.org/ns/r2rml#IRI')])
 
@@ -90,13 +92,13 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#refersToClassMap'), None) ):
          objNode = preObj + "_ObjMap"
          newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
-         newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
+         newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#RefObjectMap')])
          newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#parentTriplesMap'), obj])
          numJoins = 0
          for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#join'), None) ):
-            joinNode = preObj + "_JoinMap_" + str(numJoins)
+            joinNode = objNode + "_JoinMap_" + str(numJoins)
             numJoins = numJoins + 1
-            newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#joinCondition'), URIRef(joinNode)])
+            newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#joinCondition'), URIRef(joinNode)])
             table = re.split(' |=',obj)
             newg.add([joinNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#Join')])
             #print subject
@@ -110,4 +112,4 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
                   else:
                      newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[0])])
                      newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
-newg.serialize("cerif.r2rml.ttl",format='turtle')
+newg.serialize("R2RML_Rules/fris/ResearchOutputTypesForPublicationsD2R.r2rml.ttl",format='turtle')
