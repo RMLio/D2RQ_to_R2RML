@@ -146,10 +146,14 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
                   pp = re.compile( '.')
                   mm = re.search('(.+?)\.', table[0])
                   if str(mm.group(1)) == str(tab):
-                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[len(table)-1])])
-                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[0])])
+                     reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
+                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
+                     reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
+                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(reference)])
                   else:
-                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[0])])
+                     reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
+                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
+                     reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
                      newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
 
 now = datetime.datetime.now()
