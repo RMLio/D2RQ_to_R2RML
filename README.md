@@ -14,6 +14,12 @@ With
     <inputFile> = The D2RQL mapping document 
     <outputFile> = The corresponding R2RML mapping document
 
+Features
+--------
+Non-supported D2R(Q) Classes and Propertes (because they are out-of-scope for R2RML):
+d2r:Server
+
+
 More Information
 ----------------
 

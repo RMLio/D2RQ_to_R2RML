@@ -6,6 +6,9 @@ from rdflib.namespace import XSD
 g=rdflib.Graph()
 newg=rdflib.Graph()
 
+newg.bind("rr", URIRef("http://www.w3.org/ns/r2rml#"))
+
+
 inputfile = ''
 outputfile = ''
 
