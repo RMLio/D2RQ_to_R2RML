@@ -17,7 +17,9 @@ With
 Features
 --------
 Non-supported D2R(Q) Classes and Propertes (because they are out-of-scope for R2RML):
+
 d2r:Server
+
 d2rq:Database
 
 More Information
