@@ -22,6 +22,10 @@ d2r:Server
 
 d2rq:Database
 
+| D2RQ          | R2RML         | 
+| ------------- |:-------------:| 
+| d2rq:ClassMap | rr:TriplesMap | 
+
 More Information
 ----------------
 
