@@ -8,6 +8,12 @@ newg=rdflib.Graph()
 
 newg.bind("rr", URIRef("http://www.w3.org/ns/r2rml#"))
 newg.bind("dc", URIRef("http://purl.org/dc/elements/1.1/"))
+newg.bind("dcterms", URIRef("http://purl.org/dc/terms/"))
+newg.bind("xsd", URIRef("http://www.w3.org/2001/XMLSchema#"))
+newg.bind("owl", URIRef("http://www.w3.org/2002/07/owl#"))
+newg.bind("rdf", URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+newg.bind("rdfs", URIRef("http://www.w3.org/2000/01/rdf-schema#"))
+newg.bind("foaf", URIRef("http://xmlns.com/foaf/0.1/"))
 
 inputfile = ''
 outputfile = ''
