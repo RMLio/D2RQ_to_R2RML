@@ -1,10 +1,34 @@
+import sys,getopt
 import rdflib, re
 from rdflib import URIRef, BNode, RDF, Literal
 from rdflib.namespace import XSD
 
 g=rdflib.Graph()
 newg=rdflib.Graph()
-g.parse("D2R_Rules/fris/ResearchOutputTypesForPublicationsD2R.n3", format="n3")
+
+inputfile = ''
+outputfile = ''
+
+def main(argv):
+   global inputfile, outputfile
+   try:
+      opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
+   except getopt.GetoptError:
+      print 'python D2RQ_to_R2RML.py -i <D2RQ_mapDoc> -o <R2RML_mapDoc>'
+      sys.exit(2)
+   for opt, arg in opts:
+      if opt == '-h':
+         print 'python D2RQ_to_R2RML.py -i <D2RQ_mapDoc> -o <R2RML_mapDoc>'
+         sys.exit()
+      elif opt in ("-i", "--ifile"):
+         inputfile = arg
+      elif opt in ("-o", "--ofile"):
+         outputfile = arg
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+
+g.parse(inputfile, format="turtle")
 
 for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#ClassMap')) ):
    #generates the SubjectMap
@@ -112,4 +136,5 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
                   else:
                      newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[0])])
                      newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
-newg.serialize("R2RML_Rules/fris/ResearchOutputTypesForPublicationsD2R.r2rml.ttl",format='turtle')
+
+newg.serialize(outputfile,format='turtle')
