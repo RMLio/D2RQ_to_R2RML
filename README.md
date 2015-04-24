@@ -22,9 +22,24 @@ d2r:Server
 
 d2rq:Database
 
-| D2RQ          | R2RML         | 
-| ------------- |:-------------:| 
-| d2rq:ClassMap | rr:TriplesMap | 
+| D2RQ                   | R2RML                  		 | 
+| -----------------------|:-------------------------------------:| 
+| d2rq:ClassMap          | rr:TriplesMap          		 |
+| d2rq:PropertyBridge    | rr:PredicateObjectMap  		 |
+| d2rq:class             | rr:class               		 |
+| d2rq:uriPattern        | rr:template            		 |
+| d2rq:uriPattern        | ~rr:logicalTable       		 |
+| d2rq:belongsToClassMap | ~rr:predicateObjectMap 		 |
+| d2rq:property          | rr:property		  		 |
+| d2rq:properties	 | rr:predicate .., ..,.. 		 |
+| d2rq:dynamicProperty   | rr:PredicateMap        		 |
+| d2rq:column		 | rr:column		  		 |
+| d2rq:datatype		 | rr:datatype		  		 |
+| d2rq:lang		 | rr:language		  		 |
+| d2rq:pattern		 | rr:template "...", rr:termType rr:IRI |
+| d2rq:uriColumn	 | rr:column "...", rr:termType rr:IRI   |
+| d2rq:refersToClassMap  | rr:parentTriplesMap			 |
+| d2rq:join		 | rr:joinCondition (only if equality)   |
 
 More Information
 ----------------

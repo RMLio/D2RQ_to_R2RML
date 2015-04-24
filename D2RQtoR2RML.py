@@ -1,5 +1,5 @@
 import sys,getopt
-import rdflib, re
+import rdflib, re, time, datetime
 from rdflib import URIRef, BNode, RDF, Literal
 from rdflib.namespace import XSD
 
@@ -7,7 +7,7 @@ g=rdflib.Graph()
 newg=rdflib.Graph()
 
 newg.bind("rr", URIRef("http://www.w3.org/ns/r2rml#"))
-
+newg.bind("dc", URIRef("http://purl.org/dc/elements/1.1/"))
 
 inputfile = ''
 outputfile = ''
@@ -48,9 +48,11 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
          tableName = re.search('(.+?)\.', re.search('@@(.+?)@@', object).group(1)).group(1)
          newg.add([URIRef(logicalTableNode), URIRef('http://www.w3.org/ns/r2rml#tableName'),Literal(tableName)])
          p = re.compile( '@@(.+?)@@')
-         #intermediate = p.search(object.replace("|urlencode","").replace("|urlify","")).group(1)
+
+         #R2RML doesn't support urlencode and urlify, thus skipped
          new_obj = p.sub( r'{\1}', object.replace("|urlencode","").replace("|urlify",""))
-         newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),Literal(new_obj)])
+         reference = new_obj.replace(re.search('{(.+?)\.', new_obj).group(1)+".","")
+         newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),Literal(reference)])
       for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'), None) ):
    		newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#class'),URIRef(object)])
 
@@ -140,4 +142,6 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
                      newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(table[0])])
                      newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
 
+now = datetime.datetime.now()
+newg.add( (BNode(), URIRef("http://purl.org/dc/elements/1.1/created"), Literal(time.strftime(str(now.year)+"-"+str(now.month)+"-"+str(now.day))) ) ) 
 newg.serialize(outputfile,format='turtle')
