@@ -6,14 +6,14 @@ from rdflib.namespace import XSD
 g=rdflib.Graph()
 newg=rdflib.Graph()
 
-newg.bind("rr", URIRef("http://www.w3.org/ns/r2rml#"))
-newg.bind("dc", URIRef("http://purl.org/dc/elements/1.1/"))
+newg.bind("rr",      URIRef("http://www.w3.org/ns/r2rml#"))
+newg.bind("dc",      URIRef("http://purl.org/dc/elements/1.1/"))
 newg.bind("dcterms", URIRef("http://purl.org/dc/terms/"))
-newg.bind("xsd", URIRef("http://www.w3.org/2001/XMLSchema#"))
-newg.bind("owl", URIRef("http://www.w3.org/2002/07/owl#"))
-newg.bind("rdf", URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
-newg.bind("rdfs", URIRef("http://www.w3.org/2000/01/rdf-schema#"))
-newg.bind("foaf", URIRef("http://xmlns.com/foaf/0.1/"))
+newg.bind("xsd",     URIRef("http://www.w3.org/2001/XMLSchema#"))
+newg.bind("owl",     URIRef("http://www.w3.org/2002/07/owl#"))
+newg.bind("rdf",     URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
+newg.bind("rdfs",    URIRef("http://www.w3.org/2000/01/rdf-schema#"))
+newg.bind("foaf",    URIRef("http://xmlns.com/foaf/0.1/"))
 
 inputfile = ''
 outputfile = ''
@@ -34,33 +34,93 @@ def main(argv):
       elif opt in ("-o", "--ofile"):
          outputfile = arg
 
+
+def LogicalTable(subject):
+   global logicalTableNode
+   logicalTableNode = subject + "_LogicalTable"
+   newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'),URIRef(logicalTableNode)])
+   newg.add([URIRef(logicalTableNode), RDF.type, URIRef('http://www.w3.org/ns/r2rml#LogicalTable')])
+
+def SubjectMap(subject,pattern):
+   global newg
+   global tableName
+   subjectNode = subject + "_subjectMap"
+   newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#subjectMap'),subjectNode])
+   newg.add([subjectNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#SubjectMap')])
+   if(pattern != "null"):
+      newg.add([subject, RDF.type, URIRef('http://www.w3.org/ns/r2rml#TriplesMap')])
+      newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),Literal(pattern)])
+   else: 
+      for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
+         tableName = re.search('(.+?)\.', re.search('@@(.+?)@@', object).group(1)).group(1)
+         newg.add([URIRef(logicalTableNode), URIRef('http://www.w3.org/ns/r2rml#tableName'),Literal(tableName)])
+         p = re.compile( '@@(.+?)@@')
+         #R2RML doesn't support urlencode and urlify, thus skipped
+         new_obj = p.sub( r'{\1}', object.replace("|urlencode","").replace("|urlify",""))
+         reference = new_obj.replace(re.search('{(.+?)\.', new_obj).group(1)+".","")
+         newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),Literal(reference)])
+      if((subject,URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'),None) in g):
+         for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'), None) ):
+            newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#class'),URIRef(object)])
+
+def RefObjectMap(subject,preObj,pre,obj):
+   global newg
+   objNode = preObj + "_ObjMap"
+   newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
+   newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#RefObjectMap')])
+   newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#parentTriplesMap'), obj])
+   numJoins = 0
+   for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#join'), None) ):
+      joinNode = objNode + "_JoinMap_" + str(numJoins)
+      numJoins = numJoins + 1
+      newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#joinCondition'), URIRef(joinNode)])
+      table = re.split(' |=',obj)
+      newg.add([joinNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#Join')])
+      
+      for subject,pred,obj in newg.triples( (subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'), None) ):
+         for obj,predd,tab in newg.triples( (obj, URIRef('http://www.w3.org/ns/r2rml#tableName'), None) ):
+            pp = re.compile( '.')
+            mm = re.search('(.+?)\.', table[0])
+            if str(mm.group(1)) == str(tab):
+               reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
+               newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
+               reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
+               newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(reference)])
+            else:
+               reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
+               newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
+               reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
+               newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
+
+
+
 if __name__ == "__main__":
     main(sys.argv[1:])
 
 g.parse(inputfile, format="turtle")
 
 for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#ClassMap')) ):
+   LogicalTable(subject)
    #generates the SubjectMap
-   logicalTableNode = subject + "_LogicalTable"
-   newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'),URIRef(logicalTableNode)])
-   newg.add([URIRef(logicalTableNode), RDF.type, URIRef('http://www.w3.org/ns/r2rml#LogicalTable')])
+   # logicalTableNode = subject + "_LogicalTable"
+   # newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'),URIRef(logicalTableNode)])
+   # newg.add([URIRef(logicalTableNode), RDF.type, URIRef('http://www.w3.org/ns/r2rml#LogicalTable')])
    subjectNode = subject + "_subjectMap"
    newg.add([subject, RDF.type, URIRef('http://www.w3.org/ns/r2rml#TriplesMap')])
-   newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#subjectMap'),subjectNode])
-   newg.add([subjectNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#SubjectMap')])
+   SubjectMap(subject,"null")
 
-   if((subject,URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'),None) in g):
-      for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
-         tableName = re.search('(.+?)\.', re.search('@@(.+?)@@', object).group(1)).group(1)
-         newg.add([URIRef(logicalTableNode), URIRef('http://www.w3.org/ns/r2rml#tableName'),Literal(tableName)])
-         p = re.compile( '@@(.+?)@@')
+   # if((subject,URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'),None) in g):
+   #    for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
+   #       tableName = re.search('(.+?)\.', re.search('@@(.+?)@@', object).group(1)).group(1)
+   #       newg.add([URIRef(logicalTableNode), URIRef('http://www.w3.org/ns/r2rml#tableName'),Literal(tableName)])
+   #       p = re.compile( '@@(.+?)@@')
 
-         #R2RML doesn't support urlencode and urlify, thus skipped
-         new_obj = p.sub( r'{\1}', object.replace("|urlencode","").replace("|urlify",""))
-         reference = new_obj.replace(re.search('{(.+?)\.', new_obj).group(1)+".","")
-         newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),Literal(reference)])
-      for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'), None) ):
-   		newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#class'),URIRef(object)])
+   #       #R2RML doesn't support urlencode and urlify, thus skipped
+   #       new_obj = p.sub( r'{\1}', object.replace("|urlencode","").replace("|urlify",""))
+   #       reference = new_obj.replace(re.search('{(.+?)\.', new_obj).group(1)+".","")
+   #       newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#template'),Literal(reference)])
+   #    for subject,predicate,object in g.triples( (subject,  URIRef(u'http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#class'), None) ):
+   # 		newg.add([subjectNode, URIRef('http://www.w3.org/ns/r2rml#class'),URIRef(object)])
 
    for preObj,predicate,object in g.triples( (None,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#belongsToClassMap'), subject) ):
       newg.add([subject, URIRef('http://www.w3.org/ns/r2rml#predicateObjectMap'), URIRef(preObj)])
@@ -81,12 +141,26 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
       #template-valued object
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#uriPattern'), None) ):
          objNode = preObj + "_ObjMap"
-         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
-         newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
+         
          p = re.compile( '@@(.+?)@@')
          new_obj = p.sub( r'{\1}', obj.replace("|urlencode","").replace("|urlify",""))
          reference = new_obj.replace(re.search('{(.+?)\.', new_obj).group(1)+".","")
-         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), Literal(reference)])
+
+         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
+         #newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
+
+         if tableName != re.search('{(.+?)\.', new_obj).group(1):
+            obj = preObj + "_RefObjMap"
+            RefObjectMap(subject,preObj,pre,obj)
+            SubjectMap(obj,reference)
+            tableName = re.search('{(.+?)\.', new_obj).group(1)
+            logicalTable = preObj + "_RefObjMap_LogicalTable"
+            newg.add([obj, URIRef('http://www.w3.org/ns/r2rml#logicalTable'),URIRef(logicalTable)])
+            newg.add([URIRef(logicalTable), URIRef('http://www.w3.org/ns/r2rml#tableName'),Literal(tableName)])
+            
+         else:
+            newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#ObjectMap')])
+            newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#template'), Literal(reference)])
 
       #template-valued Literal object
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#pattern'), None) ):
@@ -129,32 +203,32 @@ for subject,predicate,object in g.triples( (None,  RDF.type, URIRef(u'http://www
 
       #Referencing object map
       for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#refersToClassMap'), None) ):
-         objNode = preObj + "_ObjMap"
-         newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
-         newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#RefObjectMap')])
-         newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#parentTriplesMap'), obj])
-         numJoins = 0
-         for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#join'), None) ):
-            joinNode = objNode + "_JoinMap_" + str(numJoins)
-            numJoins = numJoins + 1
-            newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#joinCondition'), URIRef(joinNode)])
-            table = re.split(' |=',obj)
-            newg.add([joinNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#Join')])
-            #print subject
-            for subject,pred,obj in newg.triples( (subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'), None) ):
-               for obj,predd,tab in newg.triples( (obj, URIRef('http://www.w3.org/ns/r2rml#tableName'), None) ):
-                  pp = re.compile( '.')
-                  mm = re.search('(.+?)\.', table[0])
-                  if str(mm.group(1)) == str(tab):
-                     reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
-                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
-                     reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
-                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(reference)])
-                  else:
-                     reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
-                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
-                     reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
-                     newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
+         # objNode = preObj + "_ObjMap"
+         # newg.add([preObj, URIRef('http://www.w3.org/ns/r2rml#objectMap'), objNode])
+         # newg.add([objNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#RefObjectMap')])
+         # newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#parentTriplesMap'), obj])
+         # numJoins = 0
+         # for preObj,pre,obj in g.triples( (preObj,  URIRef('http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#join'), None) ):
+         #    joinNode = objNode + "_JoinMap_" + str(numJoins)
+         #    numJoins = numJoins + 1
+         #    newg.add([objNode, URIRef('http://www.w3.org/ns/r2rml#joinCondition'), URIRef(joinNode)])
+         #    table = re.split(' |=',obj)
+         #    newg.add([joinNode, RDF.type, URIRef('http://www.w3.org/ns/r2rml#Join')])
+         #    #print subject
+         #    for subject,pred,obj in newg.triples( (subject, URIRef('http://www.w3.org/ns/r2rml#logicalTable'), None) ):
+         #       for obj,predd,tab in newg.triples( (obj, URIRef('http://www.w3.org/ns/r2rml#tableName'), None) ):
+         #          pp = re.compile( '.')
+         #          mm = re.search('(.+?)\.', table[0])
+         #          if str(mm.group(1)) == str(tab):
+         #             reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
+         #             newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
+         #             reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
+         #             newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(reference)])
+         #          else:
+         #             reference = table[0].replace(re.search('(.+?)\.', table[0]).group(1)+".","")
+         #             newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#parent'), Literal(reference)])
+         #             reference = table[len(table)-1].replace(re.search('(.+?)\.', table[len(table)-1]).group(1)+".","")
+         #             newg.add([URIRef(joinNode), URIRef('http://www.w3.org/ns/r2rml#child'), Literal(table[len(table)-1])])
 
 now = datetime.datetime.now()
 newg.add( (BNode(), URIRef("http://purl.org/dc/elements/1.1/created"), Literal(time.strftime(str(now.year)+"-"+str(now.month)+"-"+str(now.day))) ) ) 
